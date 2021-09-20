@@ -1,5 +1,6 @@
 import { HELLO } from "./module";
-import path from "path";
+import { readFile } from "./read-file";
 
 console.log(HELLO);
-console.log(path.join(process.cwd(), "hello"))
+
+console.log( readFile("README.md") );

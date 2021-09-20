@@ -2,10 +2,12 @@
     "compilerOptions": {
         "strict": true,
 
+        "incremental": true,
+
         "esModuleInterop": true,
         "allowSyntheticDefaultImports": true,
         "sourceMap": true,
         "baseUrl": ".",
-        "outDir": "dist"
+        "outDir": "build"
     }
 }

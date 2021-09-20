@@ -3,9 +3,14 @@
   "version": "1.0.0",
   "description": "A programf or automatically applying an overlay on a collection of images",
   "scripts": {
-    "test": "test",
+    "prebuild": "npm run compile",
+    "build": "pkg build/main.js --target=node14-win-x64",
+
     "compile": "tsc",
-    "start": "node dist/main.js"
+    "start": "node build/main.js",
+
+    "test": "test",
+    "": ""
   },
   "repository": {
     "type": "git",
