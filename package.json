@@ -10,7 +10,7 @@
     "start": "node build/main.js",
 
     "test": "test",
-    "": ""
+    "": "" 
   },
   "repository": {
     "type": "git",
