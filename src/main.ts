@@ -1,6 +1,9 @@
 import { HELLO } from "./module";
-import { readFile } from "./read-file";
+import { readFile, readProperties } from "./read-file";
 
 console.log(HELLO);
 
 console.log( readFile("README.md") );
+
+const props = readProperties("auto-overlay.properties");
+console.log( props.getAllProperties() );
