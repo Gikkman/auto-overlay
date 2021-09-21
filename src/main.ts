@@ -1,6 +1,6 @@
 import { HELLO } from "./module";
 import { readFile, readProperties } from "./read-file";
-import { filetreeScanner } from "./filetree-scanner";
+import { filetreeScanner, toFlatArray } from "./filetree-scanner";
 
 console.log(HELLO);
 
@@ -14,3 +14,6 @@ if(inputFolder === null) process.exit(1);
 
 const fileTree = filetreeScanner(inputFolder.toString());
 console.log(JSON.stringify(fileTree, null, 2));
+
+const flatTree = toFlatArray(fileTree);
+console.log(flatTree);

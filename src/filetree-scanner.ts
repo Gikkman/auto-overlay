@@ -26,13 +26,26 @@ function filetreeScannerRecursive(folder: FolderStub): Folder {
             return entity;
         })
         .map(obj => {
-            if(obj.type === "file") {
+            if(obj.type === "file")  {
                 return obj;
             }
-            else {
-                const folder = obj as FolderStub;
-                return filetreeScannerRecursive(folder);
-            }
+            const folder = obj as FolderStub;
+            return filetreeScannerRecursive(folder);
         });
     return {...folder, children};
+}
+
+export function toFlatArray(folder: Folder): FileEntity[] {
+    const {name, absolutePath, type} = folder;
+    const entity: FileEntity = {name, absolutePath, type};
+
+    const children = folder.children
+        .flatMap(e => {
+            if(e.type === 'file') {
+                return [e];
+            }
+            const folder = e as Folder;
+            return [...toFlatArray(folder)];
+        });
+    return [entity, ...children];
 }
