@@ -1,43 +1,60 @@
 import fs from 'fs';
 import path from 'path';
+import { getAbsolutePath } from './paths';
 
-type FileEntity = {name: string, absolutePath: string, type: 'file'|'folder'}
-type FolderStub = {name: string, absolutePath: string, type: 'folder'};
+type FileEntity = {name: string, relativePath: string, type: 'file'|'folder'}
+type FolderStub = {name: string, relativePath: string, type: 'folder'};
 type Folder = FolderStub & {children: FileEntity[]};
+export type FileTree = {folder: Folder, rootAbsolutePath: string};
 
+export function filetreeScanner(folderRelativePath: string, allowedExtensions?: string[]): FileTree {
+    const rootAbsolutePath = getAbsolutePath(folderRelativePath);
+    const name = path.basename(rootAbsolutePath);
+    if( !fs.existsSync(rootAbsolutePath) ) throw `No folder exists for value ${folderRelativePath} at location ${rootAbsolutePath}.`;
 
-export function filetreeScanner(folderRelativePath: string): Folder {
-    const cwd = process.cwd();
-    const absolutePath = path.join(cwd, folderRelativePath);
-    const name = path.basename(absolutePath);
-    if( !fs.existsSync(absolutePath) ) throw `No folder exists for value ${folderRelativePath} at location ${absolutePath}.`;
-
-    return filetreeScannerRecursive( {name, absolutePath, type: 'folder'});
+    const folder: Folder = filetreeScannerRecursive(rootAbsolutePath, allowedExtensions ?? [], {name, relativePath: ".", type: 'folder'});
+    return {rootAbsolutePath, folder};
 }
 
-function filetreeScannerRecursive(folder: FolderStub): Folder {
-    const children = fs.readdirSync(folder.absolutePath, { withFileTypes: true} )
-        .filter( obj => obj.isDirectory() || obj.isFile() || obj.isSymbolicLink() )
+function filetreeScannerRecursive(rootAbsolutePath: string, allowedExtensions: string[], folder: FolderStub): Folder {
+    const absolutePath = path.join(rootAbsolutePath, folder.relativePath);
+    const children = fs.readdirSync(absolutePath, { withFileTypes: true} )
+        .filter( obj => obj.isDirectory() || obj.isFile() )
         .map( obj => {
             const name = obj.name;
-            const absolutePath = path.join(folder.absolutePath, obj.name);
+            const relativePath = path.join(folder.relativePath, obj.name);
             const type = obj.isFile() ? 'file' : 'folder';
-            const entity: FileEntity = {name, absolutePath, type};
+            const entity: FileEntity = {name, relativePath, type};
             return entity;
+        })
+        .filter(obj => {
+            // Allow everything if "allowed extensions" is empty
+            if(allowedExtensions.length === 0) {
+                return obj;
+            }
+            // Allow folders
+            else if(obj.type === 'folder') {
+                return obj;
+            }
+            // Allow files if it has an extension which is part of "allowed extensions"
+            else {
+                const extension = path.extname(obj.relativePath);
+                if( allowedExtensions.includes(extension) ) return obj;
+            }
         })
         .map(obj => {
             if(obj.type === "file")  {
                 return obj;
             }
             const folder = obj as FolderStub;
-            return filetreeScannerRecursive(folder);
+            return filetreeScannerRecursive(rootAbsolutePath, allowedExtensions, folder);
         });
     return {...folder, children};
 }
 
 export function toFlatArray(folder: Folder): FileEntity[] {
-    const {name, absolutePath, type} = folder;
-    const entity: FileEntity = {name, absolutePath, type};
+    const {name, relativePath, type} = folder;
+    const entity: FileEntity = {name, relativePath, type};
 
     const children = folder.children
         .flatMap(e => {
@@ -48,4 +65,14 @@ export function toFlatArray(folder: Folder): FileEntity[] {
             return [...toFlatArray(folder)];
         });
     return [entity, ...children];
+}
+
+export function copyFiletreeFolderStructure(folderRelativePath: string, fileTree: FileTree) {
+    const rootAbsolutePath = getAbsolutePath(folderRelativePath);
+    const flatArray = toFlatArray(fileTree.folder);
+    flatArray
+        .filter(e => e.type === 'folder')
+        .map(e => path.join(rootAbsolutePath, e.relativePath))
+        .filter(e => !fs.existsSync(e))
+        .forEach(e => fs.mkdirSync(e));
 }

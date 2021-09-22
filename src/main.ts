@@ -1,19 +1,28 @@
-import { HELLO } from "./module";
-import { readFile, readProperties } from "./read-file";
-import { filetreeScanner, toFlatArray } from "./filetree-scanner";
+import { ensureProperty, readProperties } from "./properties";
+import { filetreeScanner, copyFiletreeFolderStructure } from "./filetree-scanner";
+import { applyOverlay, loadOverlay } from "./image-processor";
 
-console.log(HELLO);
+async function main() {
+    const props = readProperties("auto-overlay.properties");
+    console.log( props.getAllProperties() );
 
-console.log( readFile("README.md") );
+    const inputFolder = ensureProperty("input.folder", props);
+    const overlayPath = ensureProperty("input.overlay", props);
+    const outputFolder = ensureProperty("output.folder", props);
+    const allowOverwrite = ensureProperty("output.allow-overwrite", props) === 'true';
+    
+    const fileTree = filetreeScanner(inputFolder, ["png", "jpg", "jpeg"]);
+    copyFiletreeFolderStructure(outputFolder, fileTree);
 
-const props = readProperties("auto-overlay.properties");
-console.log( props.getAllProperties() );
+    await loadOverlay(overlayPath);
+    await applyOverlay(outputFolder, fileTree, allowOverwrite);
+}
 
-const inputFolder = props.get('input.folder');
-if(inputFolder === null) process.exit(1);
-
-const fileTree = filetreeScanner(inputFolder.toString());
-console.log(JSON.stringify(fileTree, null, 2));
-
-const flatTree = toFlatArray(fileTree);
-console.log(flatTree);
+main()
+.then(() => {
+    console.log("******************************** END ********************************")
+})
+.catch(e => {
+    console.error("Uncaught exception:");
+    console.error(e);
+});
