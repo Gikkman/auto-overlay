@@ -1,4 +1,5 @@
 import props from "properties-reader";
+import { Logger } from "./logger";
 import { getAbsolutePath } from "./paths";
 
 export function readProperties(fileRelativePath: string) {
@@ -9,6 +10,8 @@ export function ensureProperty(property: string, props: props.Reader): string {
     const value = props.get(property);
     if(value === null) {
         throw "Missing properties value " + property
-    }
-    return value.toString();
+    } 
+    const valueString = value.toString();
+    Logger.debug(`Property detected. ${property}: ${valueString}`)
+    return valueString;
 }

@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { Logger } from './logger';
 import { getAbsolutePath } from './paths';
 
 type FileEntity = {name: string, relativePath: string, type: 'file'|'folder'}
@@ -38,8 +39,10 @@ function filetreeScannerRecursive(rootAbsolutePath: string, allowedExtensions: s
             }
             // Allow files if it has an extension which is part of "allowed extensions"
             else {
-                const extension = path.extname(obj.relativePath);
+                // Slice(0,1) will remove the leading '.' from the extension, that extname() returns
+                const extension = path.extname(obj.relativePath).slice(1); 
                 if( allowedExtensions.includes(extension) ) return obj;
+                Logger.debug(`Skipping file ${obj.relativePath} due to illegal extension '${extension}'. Legal extensions are [${allowedExtensions.join(",")}]`)
             }
         })
         .map(obj => {

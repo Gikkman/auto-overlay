@@ -1,10 +1,12 @@
 import { ensureProperty, readProperties } from "./properties";
 import { filetreeScanner, copyFiletreeFolderStructure } from "./filetree-scanner";
 import { applyOverlay, loadOverlay } from "./image-processor";
+import { Logger, setLogLevel } from "./logger";
+import PropertiesReader from "properties-reader";
 
 async function main() {
     const props = readProperties("auto-overlay.properties");
-    console.log( props.getAllProperties() );
+    configureLogger(props.get("app.log-level")?.toString());
 
     const inputFolder = ensureProperty("input.folder", props);
     const overlayPath = ensureProperty("input.overlay", props);
@@ -19,10 +21,25 @@ async function main() {
 }
 
 main()
-.then(() => {
-    console.log("******************************** END ********************************")
+.then(async () => {
+    process.stdin.setRawMode(true);
+    process.stdin.resume();
+    console.log("---- Press any key to exit ----")
+    process.stdin.on('data', () => {
+        process.exit();
+    });
 })
 .catch(e => {
-    console.error("Uncaught exception:");
-    console.error(e);
+    Logger.error("Uncaught exception:");
+    Logger.error(e);
 });
+
+function configureLogger(logLevel?: string) {
+    if(logLevel !== 'error' && logLevel !== 'info' && logLevel !== 'debug') {
+        setLogLevel('info');
+        Logger.info(`Invalid log level '${logLevel}'. Defaulting to 'info'.`);
+    } else {
+        setLogLevel(logLevel);
+        Logger.info(`Log level set to' ${logLevel}'.`);
+    }
+}
