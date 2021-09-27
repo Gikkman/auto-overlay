@@ -10,6 +10,8 @@ A small program for automatically adding a overlay image on top of a all images 
 
 `npm run start` - Will run the Javascript code
 
+Configuration for the program resides in the `auto-overlay.properties` file. You can open and edit the file with any text editor, for example Notepad. It is just a plain text file. I hope the file is fairly self explanatory.
+
 # Build
 `npm run build` - Will build a Windows executable
 
